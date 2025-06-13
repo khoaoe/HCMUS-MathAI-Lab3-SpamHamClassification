@@ -1,7 +1,11 @@
 \section{Giới thiệu}
 
-\subsection{Mục tiêu bài lab}
-Bài lab này nhằm xây dựng pipeline phân loại thư rác sử dụng thuật toán \texttt{Naive Bayes}, được huấn luyện trên một phần của tập dữ liệu Enron-Spam và có khả năng phân loại email thành hai nhóm: spam và ham (thư thường).
+\subsection{Mục tiêu bài Lab}
+Bài Lab này nhằm xây dựng pipeline phân loại thư rác sử dụng thuật toán \texttt{Naive Bayes}, được huấn luyện trên một phần của tập dữ liệu Enron-Spam và có khả năng phân loại email thành hai nhóm: spam và ham (thư thường).
+\begin{itemize}
+    \item File thực hiện: \texttt{naive\_bayes.ipynb}
+    \item Link Google Colab: \href{https://colab.research.google.com/drive/1ak1tem0BahBoTphuWsCrY9-QLOd2sJru?usp=sharing}{\texttt{naive\_bayes.ipynb}}
+\end{itemize}
 
 \subsection{Tập dữ liệu}
 Bộ dữ liệu được sử dụng là một phần của bộ Enron-Spam, được chia thành hai tập:
@@ -11,13 +15,15 @@ Bộ dữ liệu được sử dụng là một phần của bộ Enron-Spam, đ
 \end{itemize}
 Mỗi tập chứa các cột sẽ được sử dụng để train là: \texttt{Subject} (tiêu đề), \texttt{Message} (nội dung), và \texttt{Spam/Ham} (nhãn).
 
-\section{Tiền xử lý dữ liệu}
-
-\subsection{Làm sạch và chuẩn hóa}
-Thực hiện các bước tiền xử lý sau cho cả tiêu đề và nội dung của mỗi email:
-
+\section{Tiền xử lý dữ liệu} \label{preprocess}
+Sử dụng hàm \texttt{clean\_data} để thực hiện các công việc sau:
 \begin{enumerate}
-    \item \textbf{Xử lý giá trị thiếu}: Thay thế giá trị NaN trong các cột liên quan bằng chuỗi rỗng.
+    \item \textbf{Xử lý giá trị thiếu}: Thay thế giá trị NaN trong các cột bằng chuỗi rỗng.
+    \item \textbf{Loại bỏ dữ liệu thừa}: Nếu có các dòng giống nhau thì bỏ bớt.
+\end{enumerate}
+
+Sau bước trên, thực hiện các bước tiền xử lý sau cho cả 'Subject' và 'Message' của mỗi email bằng hàm \texttt{preprocess\_text}:
+\begin{enumerate}
     \item \textbf{Kết hợp Subject và Message}: Tạo một trường văn bản duy nhất để phân tích.
     \item \textbf{Tạo token đặc trưng}: Dựa trên dữ liệu thô, tạo ra các token đặc biệt để nắm bắt các đặc điểm như tỷ lệ chữ in hoa cao (\texttt{\_\_FEAT\_HIGH\_CAPS\_\_}), có nhiều ký tự đặc biệt (\texttt{\_\_FEAT\_MANY\_SPECIALS\_\_}) và nhiều chữ số (\texttt{\_\_FEAT\_MANY\_DIGITS\_\_}).
     \item \textbf{Chuẩn hóa văn bản}: Chuyển toàn bộ văn bản về chữ thường, loại bỏ các ký tự không phải chữ và số, và xóa các khoảng trắng thừa.
@@ -25,31 +31,21 @@ Thực hiện các bước tiền xử lý sau cho cả tiêu đề và nội du
 
 \begin{minted}{python}
 def preprocess_text(text):
-    # Trích xuất
+    #1. Trích xuất
     subject = text['Subject']
     message = text['Message']
-    
-    # Tạo token đặc trưng từ dữ liệu thô
+    #2. Tạo token đặc trưng từ dữ liệu thô
     full_text_raw = str(subject) + " " + str(message)
     # ... (logic tạo feature tokens) ...
-    
-    # Tiền xử lý văn bản
+    #3. Tiền xử lý văn bản
     processed_text = full_text_raw.lower()
     processed_text = re.sub(r'[^a-zA-Z0-9\\s]', ' ', processed_text)
     processed_text = ' '.join(processed_text.split())
-    
-    # Kết hợp và trả về
+    #4. Kết hợp và trả về
     return feature_token_string + ' ' + processed_text
 \end{minted}
 
-\subsection{Tokenization, N-grams và Xây dựng Từ vựng}
-Để tăng cường khả năng nhận diện các cụm từ có ý nghĩa, nhóm áp dụng các kỹ thuật sau:
-\begin{enumerate}
-    \item \textbf{Loại bỏ stopwords}: Các từ phổ biến trong tiếng Anh được loại bỏ.
-    \item \textbf{Stemming}: Các từ được đưa về dạng gốc (ví dụ: "running" -> "run").
-    \item \textbf{Tạo Bigrams (N=2)}: Các cặp từ liền kề sau khi stemming được kết hợp thành một token duy nhất (ví dụ: "buy\_now") để nắm bắt ngữ cảnh tốt hơn.
-    \item \textbf{Xây dựng vocabulary}: Vocabulary được xây dựng từ tập train, chỉ bao gồm các token  unigrams (từ gốc) và bigrams có tần suất xuất hiện >= 3 lần. Kích thước từ vựng cuối cùng là \textbf{301.688} từ.
-\end{enumerate}
+
 
 \section{Mô hình Naive Bayes}
 
@@ -64,10 +60,27 @@ Trong đó:
     \item $P(x|y)$: likelihood của dữ liệu $x$ cho lớp $y$.
 \end{itemize}
 
-\subsection{Ước lượng tham số với Laplace Smoothing}
-Để tránh vấn đề xác suất bằng 0 khi gặp từ chưa xuất hiện, sử dụng kỹ thuật \texttt{Laplace smoothing}:
+\subsection{Tham số \texttt{alpha}}
+Để tránh vấn đề xác suất bằng 0 khi gặp từ chưa xuất hiện, sử dụng kỹ thuật \textbf{Laplace smoothing}:
 $$P(w|y) = \frac{count(w, y) + \alpha}{count(y) + \alpha|V|}$$
 Trong đó $|V|$ là kích thước từ vựng và $\alpha$ là tham số smoothing.
+
+\textbf{}
+
+\textbf{Chọn hệ số $\alpha$:} Qua thử nghiệm huấn luyện trên tập \texttt{train} với 5 giá trị $\alpha$ khác nhau được chọn một cách thủ công là (0.1, 0.5, 1.0, 2.0, 5.0) rồi sau đó đánh giá trên tập \texttt{validation}, dựa trên \texttt{Accuracy}, đã chọn $\alpha = $ \textbf{0.1} (với acc = \texttt{0.9903}).
+
+\subsection{Tham số \texttt{tokenizer}}
+Để tăng cường khả năng nhận diện các cụm từ có ý nghĩa, đây là tham số sử dụng hàm \texttt{tokenizer\_with\_bigrams} để xử lý thêm đầu vào đã qua bước tiền xử lý ở \ref{preprocess} (tokenization, stemming và tạo bigrams), cụ thể hàm này thực hiện các bước sau: 
+\begin{enumerate}
+    \item \textbf{Loại bỏ stopwords}: Các từ phổ biến trong tiếng Anh được loại bỏ.
+    \item \textbf{Stemming}: Các từ được đưa về dạng gốc (ví dụ: "running" -> "run").
+    \item \textbf{Tạo Bigramss}: Các cặp từ liền kề sau khi stemming được kết hợp thành một token duy nhất (ví dụ: "buy\_now") để nắm bắt ngữ cảnh tốt hơn.
+\end{enumerate}
+
+\subsection{Xây dựng Vocabulary}
+Khi mô hình huấn luyện, vocabulary được xây dựng từ tập dữ liệu, chỉ bao gồm các token  unigrams (từ gốc) và bigrams có tần suất xuất hiện >= 3 lần. 
+
+Kích thước vocabulary cuối cùng khi huấn luyện trên tập \texttt{train} là \textbf{301.688} từ.
 
 \subsection{Cài đặt mô hình}
 \begin{minted}{python}
@@ -75,28 +88,23 @@ class NaiveBayesClassifier:
     def __init__(self, alpha=1.0, tokenizer=None):
         self.alpha = alpha
         self.tokenizer = tokenizer #... (khởi tạo các biến khác)
-
     def fit(self, X_train, y_train):
-        # ... (tính xác suất tiên nghiệm) ...
-        
-        # Đếm từ và xây dựng từ vựng
+        #1. ... (tính xác suất tiên nghiệm) ...
+        #2. Đếm từ và xây dựng từ vựng
         word_counts = {c: Counter() for c in self.classes}
         all_words_counter = Counter()
         for text, label in zip(X_train, y_train):
             # ... (cập nhật word_counts và all_words_counter) ...
-        
         # Cắt tỉa (pruning) để tạo bộ từ vựng cuối cùng
         min_frequency = 3
         self.vocab = {word for word, count 
                       in all_words_counter.items() 
                       if count >= min_frequency}
-        
-        # ... (tính likelihood với Laplace smoothing) ...
+        #3. ... (tính likelihood với Laplace smoothing) ...
         return self
-
     def predict(self, X_test):
         # ... (logic dự đoán) ...
-        return predictions
+        return predictions, log_probs
 \end{minted}
 
 \section{Kết quả thực nghiệm}
@@ -110,17 +118,17 @@ Mô hình được huấn luyện trên \texttt{train.csv} và đánh giá cả 
 \hline
 \textbf{Tập dữ liệu} & \textbf{Accuracy} & \textbf{Precision (Spam)} & \textbf{Recall (Spam)} & \textbf{F1-Score (Spam)} \\
 \hline
-Train set & 99.54\% & 99.54\% & 99.55\% & 99.55\% \\
+Train set & 99.63\% & 99.68\% & 99.60\% & 99.64\% \\
 \hline
-Val set & \textbf{98.93\%} & \textbf{98.79\%} & \textbf{99.10\%} & \textbf{98.95\%} \\
+Val set & \textbf{98.99\%} & \textbf{99.04\%} & \textbf{98.98\%} & \textbf{99.01\%} \\
 \hline
 \end{tabular}
-\caption{Kết quả đánh giá mô hình Naive Bayes với alpha = 1}
+\caption{Kết quả đánh giá mô hình Naive Bayes với alpha = 0.1}
 \label{tab:results}
 \end{table}
 
 \subsection{Confusion Matrix}
-Confusion Matrix trên tập validation cho thấy khả năng phân biệt tốt giữa hai lớp, với rất ít trường hợp dự đoán sai.
+Confusion Matrix trên tập validation cho thấy khả năng phân biệt tốt giữa hai lớp, với rất ít trường hợp dự đoán sai. Bảng \ref{fig:confusion_matrix}
 
 \begin{table}[H]
 \centering
@@ -128,9 +136,9 @@ Confusion Matrix trên tập validation cho thấy khả năng phân biệt tố
 \hline
 & \textbf{Dự đoán: Ham} & \textbf{Dự đoán: Spam} \\
 \hline
-\textbf{Thực tế: Ham} & \textbf{1504} & \textbf{19} \\
+\textbf{Thực tế: Ham} & \textbf{1506} & \textbf{15} \\
 \hline
-\textbf{Thực tế: Spam} & \textbf{14} & \textbf{1547} \\
+\textbf{Thực tế: Spam} & \textbf{16} & \textbf{1547} \\
 \hline
 \end{tabular}
 \caption{Confusion Matrix trên tập validation (Tổng số: 3.084)}
@@ -139,36 +147,53 @@ Confusion Matrix trên tập validation cho thấy khả năng phân biệt tố
 
 \section{Thử nghiệm thực tế}
 
-\subsection{Chức năng 1: Dự đoán email đơn lẻ}
-Hệ thống cho phép người dùng nhập tiêu đề và nội dung để phân loại.
-
+\subsection{Chức năng 1: Dự đoán email người dùng nhập}
+Cho phép người dùng nhập tiêu đề và nội dung để phân loại qua hàm \textbf{predict\_user\_email}
 \begin{minted}{python}
 def predict_user_email():
-    # ... (nhập subject và message từ người dùng) ...
-    
-    # Tiền xử lý
+    #1. ... (nhập subject và message từ người dùng) ...
+    #2. Tiền xử lý
     predict_text = preprocess_text({'Subject': subject, 'Message': message})
-    
-    # Dự đoán và tính xác suất
+    #3. Dự đoán và tính xác suất
     prediction, log_probs = nb_classifier._predict_single(predict_text)
     # ... (logic tính và hiển thị xác suất) ...
+\end{minted}
 
-# Ví dụ sử dụng
-subject = "50% offf Iphone 16"
-message = "Only for today"
-# Kết quả:
-# Dự đoán: SPAM
-# Xác suất: Spam=95.83%, Ham=4.17%
+Kết quả của một ví dụ sử dụng:
+\begin{minted}{console}
+=== DỰ ĐOÁN EMAIL NHẬP THỦ CÔNG ===
+Nhập tiêu đề email: 50% offf Iphone 16
+Nhập nội dung email: Only for today
+# Kết quả dự đoán: SPAM
+# Xác suất spam: 0.9913
+# Xác suất ham: 0.0087
 \end{minted}
 
 \subsection{Chức năng 2: Đánh giá file CSV mới}
-Chương trình cung cấp chức năng để người dùng có thể tải lên một file CSV (có cấu trúc tương tự \texttt{val.csv}) và nhận về kết quả đánh giá hiệu suất của mô hình trên file đó.
+Xây dựng hàm \textbf{evaluate\_csv\_file} cung cấp chức năng để người dùng có thể tải lên một file CSV (có cấu trúc tương tự \texttt{val.csv}) và nhận về kết quả đánh giá hiệu suất của mô hình trên file đó.
+
+Kết quả của một ví dụ sử dụng:
+\begin{minted}{console}
+evaluate_csv_file('val.csv', model = nb_classifier)
+#=== ĐÁNH GIÁ DỰ ĐOÁN FILE: val.csv ===
+#Đã đọc 3084 dòng từ file
+#Kết quả đánh giá:
+# - Accuracy: 0.9903
+# - Lớp 'ham':
+#   + Precision: 0.9901
+#   + Recall: 0.9901
+#   + F1-score: 0.9901
+# - Lớp 'spam':
+#   + Precision: 0.9904
+#   + Recall: 0.9904
+#   + F1-score: 0.9904
+\end{minted}
 
 \section{Phân tích và thảo luận}
 
 \subsection{Các cải tiến}
 \begin{itemize}
-    \item \textbf{Sử dụng N-grams để nắm bắt ngữ cảnh:} Để khắc phục một phần giả định độc lập giữa các từ, mô hình đã sử dụng \textbf{bigrams} (cặp từ) bên cạnh các từ đơn (unigrams). Điều này giúp mô hình nhận diện được các cụm từ có ý nghĩa như "buy now" hay "limited time", cải thiện độ chính xác khi phân loại.
+    \item \textbf{Sử dụng N-grams để nắm bắt ngữ cảnh:} Để khắc phục một phần giả định độc lập giữa các từ, mô hình đã sử dụng \texttt{bigrams} (cặp từ) bên cạnh các từ đơn (unigrams). Điều này giúp mô hình nhận diện được các cụm từ có ý nghĩa như "buy now" hay "limited time", cải thiện độ chính xác khi phân loại.
 
     \item \textbf{Feature Engineering - Tạo token đặc trưng:} Thay vì chỉ dựa vào nội dung văn bản, mô hình tạo ra các token đặc trưng để nắm bắt đặc điểm quan trọng thường xuất hiện trong thư rác. Các đặc trưng này bao gồm:
     \begin{itemize}
@@ -176,21 +201,21 @@ Chương trình cung cấp chức năng để người dùng có thể tải lê
         \item Sự xuất hiện của nhiều ký tự đặc biệt như `!`, `\$`, `\%` (\texttt{\_\_FEAT\_MANY\_SPECIALS\_\_}).
         \item Sự xuất hiện của nhiều chữ số (\texttt{\_\_FEAT\_MANY\_DIGITS\_\_}).
     \end{itemize}
-    \item \textbf{Tối ưu hóa tham số Smoothing (Alpha):} Nhóm đã thử nghiệm với các giá trị $\alpha$ khác nhau (0.1, 0.5, 1.0, 2.0, 5.0). Kết quả cho thấy mô hình đạt Accuracy cao nhất trên tập validation khi $\alpha = \textbf{0.5}$ (Accuracy = 0.9870).
+    \item \textbf{Tối ưu hóa tham số Smoothing (alpha):} Nhóm đã thử nghiệm với 5 giá trị $\alpha$ khác nhau (0.1, 0.5, 1.0, 2.0, 5.0). Kết quả cho thấy mô hình đạt Accuracy cao nhất trên tập validation khi $\alpha = \textbf{0.1}$ (Accuracy = 0.9903).
 \end{itemize}
 
 \subsection{Các hạn chế}
 \begin{itemize}
-    \item \textbf{Chọn alpha thủ công:} Chọn các mốc alpha thủ công, không tối ưu nhất. Nhóm không sử dụng các phương pháp để chọn alpha tôi ưu vì có các phương pháp tốn quá nhiều thời gian (K-fold, Grid search, ...) và các phương pháp quá phức tạp vượt qua phạm vi môn học (Bayesian Optimization, ...)
+    \item \textbf{Chọn alpha thủ công:} Chọn các mốc alpha thủ công, không tối ưu nhất. Em không sử dụng các phương pháp để chọn alpha tôi ưu vì có các phương pháp tốn quá nhiều thời gian (K-fold, Grid search, ..., cho nhiều mốc alpha hơn) vài các phương pháp quá phức tạp vượt qua phạm vi môn học (Bayesian Optimization, ...)
     \item \textbf{Feature Engineering:} Có thể cải tiến bằng cách thêm các đặc trưng khác như nguồn gốc email, sự tồn tại của tệp đính kèm, hoặc phân tích sâu hơn về cấu trúc HTML của email. Hiện tại bỏ qua vì kết quả đã rất tốt và cách này cũng khá phức tạp để triển khai.
 \end{itemize}
 
 \section{Kết luận}
- Nhóm đã xây dựng mô hình phân loại thư rác hiệu quả bằng thuật toán Naive Bayes. Mô hình đạt Accuracy tốt là \textbf{98.93\%} trên tập Val, cho thấy khả năng tổng quát hóa tốt.
+ Nhóm đã xây dựng mô hình phân loại thư rác hiệu quả bằng thuật toán Naive Bayes. Mô hình đạt Accuracy tốt là \textbf{99.03\%} trên tập \texttt{validation}, cho thấy khả năng tổng quát hóa tốt.
 
-Các đóng điểm chính của bài lab:
+Các điểm chính của bài Lab:
 \begin{itemize}
-    \item Cài đặt thuật toán Naive Bayes "from-scratch"
+    \item Cài đặt thành công thuật toán Naive Bayes "from-scratch"
     \item Áp dụng các kỹ thuật tiền xử lý và feature engineering (bigrams, token đặc trưng) để nâng cao hiệu suất.
-    \item Xây dựng các 2 chức năng như yêu cầu đề bài để người dùng có thể tương tác và đánh giá trên tập dữ liệu mới.
+    \item Xây dựng thành công 2 chức năng như yêu cầu đề bài
 \end{itemize}
