@@ -178,15 +178,15 @@ evaluate_csv_file('val.csv', model = nb_classifier)
 #=== ĐÁNH GIÁ DỰ ĐOÁN FILE: val.csv ===
 #Đã đọc 3084 dòng từ file
 #Kết quả đánh giá:
-# - Accuracy: 0.9903
-# - Lớp 'ham':
-#   + Precision: 0.9901
-#   + Recall: 0.9901
-#   + F1-score: 0.9901
+# - Accuracy: 0.9899
 # - Lớp 'spam':
 #   + Precision: 0.9904
-#   + Recall: 0.9904
-#   + F1-score: 0.9904
+#   + Recall: 0.9898
+#   + F1-score: 0.9901
+# - Lớp 'ham':
+#   + Precision: 0.9895
+#   + Recall: 0.9901
+#   + F1-score: 0.9898
 \end{minted}
 
 \section{Phân tích và thảo luận}
@@ -201,7 +201,7 @@ evaluate_csv_file('val.csv', model = nb_classifier)
         \item Sự xuất hiện của nhiều ký tự đặc biệt như `!`, `\$`, `\%` (\texttt{\_\_FEAT\_MANY\_SPECIALS\_\_}).
         \item Sự xuất hiện của nhiều chữ số (\texttt{\_\_FEAT\_MANY\_DIGITS\_\_}).
     \end{itemize}
-    \item \textbf{Tối ưu hóa tham số Smoothing (alpha):} Nhóm đã thử nghiệm với 5 giá trị $\alpha$ khác nhau (0.1, 0.5, 1.0, 2.0, 5.0). Kết quả cho thấy mô hình đạt Accuracy cao nhất trên tập validation khi $\alpha = \textbf{0.1}$ (Accuracy = 0.9903).
+    \item \textbf{Tối ưu hóa tham số Smoothing (alpha):} Nhóm đã thử nghiệm với 5 giá trị $\alpha$ khác nhau (0.1, 0.5, 1.0, 2.0, 5.0). Kết quả cho thấy mô hình đạt \texttt{Accuracy} cao nhất trên tập \texttt{validation} khi $\alpha = \textbf{0.1}$ (accuracy = 0.9899).
 \end{itemize}
 
 \subsection{Các hạn chế}
@@ -211,7 +211,7 @@ evaluate_csv_file('val.csv', model = nb_classifier)
 \end{itemize}
 
 \section{Kết luận}
- Nhóm đã xây dựng mô hình phân loại thư rác hiệu quả bằng thuật toán Naive Bayes. Mô hình đạt Accuracy tốt là \textbf{99.03\%} trên tập \texttt{validation}, cho thấy khả năng tổng quát hóa tốt.
+ Nhóm đã xây dựng mô hình phân loại thư rác hiệu quả bằng thuật toán Naive Bayes. Mô hình đạt Accuracy tốt là \textbf{98.99\%} trên tập \texttt{validation}, cho thấy khả năng tổng quát hóa tốt.
 
 Các điểm chính của bài Lab:
 \begin{itemize}
