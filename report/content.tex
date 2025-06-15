@@ -50,7 +50,7 @@ def preprocess_text(text):
 \section{Mô hình Naive Bayes}
 
 \subsection{Cơ sở lý thuyết}
-Naive Bayes là thuật toán phân loại dựa trên định lý Bayes với giả định độc lập có điều kiện giữa các đặc trưng (từ). Công thức phân loại một email:
+\textbf{Naive Bayes} là thuật toán phân loại dựa trên định lý Bayes với giả định độc lập có điều kiện giữa các đặc trưng (từ). Công thức phân loại một email:
 $$P(y|x) \propto P(y) \prod_{i=1}^{n} P(x_i|y)$$
 Trong đó:
 \begin{itemize}
@@ -169,7 +169,7 @@ Nhập nội dung email: Only for today
 # Xác suất ham: 0.0086
 \end{minted}
 
-\subsection{Chức năng 2: Đánh giá file CSV mới}
+\subsection{Chức năng 2: Đánh giá trên file CSV mới}
 Xây dựng hàm \textbf{evaluate\_csv\_file} cung cấp chức năng để người dùng có thể tải lên một file CSV (có cấu trúc tương tự \texttt{val.csv}) và nhận về kết quả đánh giá hiệu suất của mô hình trên file đó.
 
 Kết quả của một ví dụ sử dụng:
@@ -215,7 +215,11 @@ evaluate_csv_file('val.csv', model = nb_classifier)
 
 Các điểm chính của bài Lab:
 \begin{itemize}
-    \item Cài đặt thành công thuật toán \texttt{Naive Bayes} "from-scratch"
-    \item Áp dụng các kỹ thuật tiền xử lý và feature engineering (bigrams, token đặc trưng) để nâng cao hiệu suất.
-    \item Xây dựng thành công 2 chức năng như yêu cầu đề bài 
+    \item Cài đặt thành công thuật toán \textbf{Naive Bayes} "from-scratch"
+    \item Áp dụng các kỹ thuật \texttt{tiền xử lý} và \texttt{feature engineering} (bigrams, token đặc trưng) để nâng cao hiệu suất.
+    \item Xây dựng thành công 2 chức năng như yêu cầu đề bài:
+    \begin{itemize}
+        \item Dự đoán email người dùng nhập (hàm \texttt{predict\_user\_email})
+        \item Đánh giá trên file CSV mới (hàm \texttt{evaluate\_csv\_file})
+    \end{itemize}
 \end{itemize}
